@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% block title %}Relatório de Clientes{% endblock %}
+
+{% block main_content %}
+<div class="container py-4">
+    
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="tabela">
+            <div class="row">
+                <div class="col-12">
+        <div class="bg-secondary rounded h-100 p-4">
+            <h2 class="text-center text-3xl font-semibold mb-4">Relatório de Clientes</h2>
+
+    <!-- Adicione este bloco acima da tabela existente -->
+    <div class="mb-3">
+        <form method="GET" action="{% url 'relatorio_clientes' %}">
+            <div class="row">
+                <div class="col-md-3">
+                    <label for="statusFilter" class="form-label">Status:</label>
+                    <select class="form-control" id="statusFilter" name="status">
+                        <option value="">Todos</option>
+                        <option value="aguardando_aprovacao">Aguardado Aprovação</option>
+                        <option value="documentacao_pendente">Documentação Pendente</option>
+                        <option value="aguardando_cancelamento_qv">Aguardando Cancelamento / QV</option>
+                        <option value="cliente_aprovado">Cliente Aprovado</option>
+                        <option value="reprovado">Cliente Reprovado</option>
+                        <option value="proposta_apresentada">Proposta Apresentada</option>
+                        <option value="visita_efetuada">Visita Efetuada</option>
+                        <option value="nao_deu_continuidade">Não Deu Continuidade</option>
+                        <option value="venda_concluida">Venda Concluída</option>
+                        <option value="fechamento_proposta">Fechamento de Proposta</option>
+                        <option value="processo_em_aberto">Processo em Aberto</option>
+                        <option value="reprovado">Reprovado</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="corretorFilter" class="form-label">Corretor:</label>
+                    <select class="form-control" id="corretorFilter" name="corretor">
+                        <option value="">Todos</option>
+                        {% for corretor in corretores %}
+                        <option value="{{ corretor.pk }}">{{ corretor.first_name }} {{ corretor.last_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="dataInicioFilter" class="form-label">Data Início:</label>
+                    <input type="date" class="form-control" id="dataInicioFilter" name="data_inicio">
+                </div>
+                <div class="col-md-3">
+                    <label for="dataFimFilter" class="form-label">Data Fim:</label>
+                    <input type="date" class="form-control" id="dataFimFilter" name="data_fim">
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary mt-4">Aplicar Filtros</button>
+                </div>
+            </div>
+        </form>
+        <div class="mt-4">
+            <a href="{% url 'relatorio_clientes_pdf' %}?{{ request.GET.urlencode }}" class="btn btn-primary">Baixar Relatório em PDF</a>
+        </div>
+    </div>
+            <!-- Estatísticas -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Clientes</h5>
+                    <p class="card-text text-white">{{ total_clientes }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Clientes Aprovados</h5>
+                    <p class="card-text text-white">{{ clientes_aprovados }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-danger mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Clientes Reprovados</h5>
+                    <p class="card-text text-white">{{ clientes_reprovados }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Este Mês</h5>
+                    <p class="card-text text-white">{{ novos_clientes_mes }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Processos em Aberto</h5>
+                    <p class="card-text text-white">{{ processos_em_aberto }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+            <h6 class="mb-4 text-white">Responsive Table</h6>
+            <div class="table-responsive">
+                <table class="table table-dark"> <!-- Adicionei a classe 'table-dark' para usar as cores preto e azul -->
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Corretor</th>
+                            <th>Status</th>
+                            <th>Data de Criação</th>
+                        </tr>
+                    </thead>
+                    <!-- Corpo da tabela -->
+                    <tbody>
+                        {% for cliente in clientes %}
+                        <tr>
+                            <td>{{ cliente.nome }}</td>
+                            <td>{{ cliente.email }}</td>
+                            <td>{{ cliente.telefone }}</td>
+                            <td>{{ cliente.corretor.first_name }} {{ cliente.corretor.last_name}}
+                            </td>
+                            <td>
+                                <button class="btn btn-status {% if cliente.status == 'aguardando_aprovacao' %}btn-warning{% elif cliente.status == 'documentacao_pendente' %}btn-danger{% elif cliente.status == 'aguardando_cancelamento_qv' %}btn-danger{% elif cliente.status == 'cliente_aprovado' %}btn-success{% elif cliente.status == 'reprovado' %}btn-danger{% elif cliente.status == 'proposta_apresentada' %}btn-primary{% elif cliente.status == 'visita_efetuada' %}btn-info{% elif cliente.status == 'nao_deu_continuidade' %}btn-secondary{% elif cliente.status == 'venda_concluida' %}btn-primary{% elif cliente.status == 'processo_em_aberto' %}btn-primary{% elif cliente.status == 'concluido' %}btn-primary{% else %}btn-secondary{% endif %}">
+                                    {{ cliente.get_status_display }}
+                                </button>
+                            </td>
+                            <td>{{ cliente.data_de_criacao }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-pane fade" id="grafico">
+        <canvas id="graficoBarras" width="400" height="200"></canvas>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        $('#tabTabela').on('click', function(){
+            $('#tabela').addClass('show active');
+            $('#grafico').removeClass('show active');
+            $('#tabTabela').addClass('active');
+            $('#tabGrafico').removeClass('active');
+        });
+
+        $('#tabGrafico').on('click', function(){
+            $('#tabela').removeClass('show active');
+            $('#grafico').addClass('show active');
+            $('#tabTabela').removeClass('active');
+            $('#tabGrafico').addClass('active');
+            // Renderize o gráfico de barras aqui se necessário
+        });
+    });
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var ctx = document.getElementById('graficoBarras').getContext('2d');
+        var myBarChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Aguardando Aprovação', 'Documentação Pendente', 'Aguardando Cancelamento / QV', 'Cliente Aprovado', 'Reprovado', 'Proposta Apresentada', 'Visita Efetuada', 'Não Deu Continuidade', 'Venda Concluída', 'Fechamento de Proposta'],
+                datasets: [{
+                    label: 'Número de Clientes',
+                    data: [
+                        {{ clientes_aguardando_aprovacao }},
+                        {{ clientes_documentacao_pendente }},
+                        {{ clientes_aguardando_cancelamento_qv }},
+                        {{ clientes_cliente_aprovado }},
+                        {{ clientes_reprovado }},
+                        {{ clientes_proposta_apresentada }},
+                        {{ clientes_visita_efetuada }},
+                        {{ clientes_nao_deu_continuidade }},
+                        {{ clientes_venda_concluida }},
+                        {{ clientes_fechamento_proposta }}
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(153, 102, 255, 0.5)',
+                        'rgba(255, 159, 64, 0.5)',
+                        'rgba(255, 99, 132, 0.5)',
+                        'rgba(54, 162, 235, 0.5)',
+                        'rgba(255, 206, 86, 0.5)',
+                        'rgba(75, 192, 192, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)',
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

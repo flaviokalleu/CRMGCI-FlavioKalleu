@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block main_content %}
+<div class="container-fluid py-4 px-2 sm:px-4">
+    <div class="card shadow-md rounded-lg">
+        <div class="card-body p-3 sm:p-6">
+            <h2 class="text-xl sm:text-2xl font-bold text-center mb-4 text-white p-3 sm:p-4 rounded">Adicionar Imóvel</h2>
+            <form method="post" action="{% url 'adicionar_imovel' %}" class="space-y-4" id="formAdicionarImovel" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_nome_do_imovel" class="text-white">Nome do Imóvel:</label>
+                    <input type="text" name="nome_do_imovel" id="id_nome_do_imovel" class="form-control" style="color: black;">
+                    {% if form.nome_do_imovel.errors %}
+                        <span class="text-red-500">{{ form.nome_do_imovel.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_descricao" class="text-white">Descrição do Imóvel:</label>
+                    <textarea name="descricao" id="id_descricao" class="form-control" style="color: black;"></textarea>
+                    {% if form.descricao.errors %}
+                        <span class="text-red-500">{{ form.descricao.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_endereco" class="text-white">Endereço:</label>
+                    <input type="text" name="endereco" id="id_endereco" class="form-control" style="color: black;">
+                    {% if form.endereco.errors %}
+                        <span class="text-red-500">{{ form.endereco.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_tipo" class="text-white">Tipo:</label>
+                    <select name="tipo" id="id_tipo" class="form-control" style="color: black;">
+                        <option value="NOVO">Novo</option>
+                        <option value="USADO">Usado</option>
+                        <option value="AGIO">Ágio</option>
+                    </select>
+                    {% if form.tipo.errors %}
+                        <span class="text-red-500">{{ form.tipo.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_quartos" class="text-white">Quartos:</label>
+                    <input type="text" name="quartos" id="id_quartos" class="form-control" style="color: black;">
+                    {% if form.quartos.errors %}
+                        <span class="text-red-500">{{ form.quartos.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_banheiro" class="text-white">Banheiro:</label>
+                    <input type="text" name="banheiro" id="id_banheiro" class="form-control" style="color: black;">
+                    {% if form.banheiro.errors %}
+                        <span class="text-red-500">{{ form.banheiro.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_tags" class="text-white">Tags:</label>
+                    <select name="tags" id="id_tags" class="form-control" multiple style="color: black;">
+                        {% for tag in form.fields.tags.queryset %}
+                            <option value="{{ tag.id }}" {% if tag in form.instance.tags.all %}selected{% endif %}>{{ tag.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if form.tags.errors %}
+                        <span class="text-red-500">{{ form.tags.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_valor_de_avaliacao" class="text-white">Valor de Avaliação:</label>
+                    <input type="text" name="valor_de_avaliacao" id="id_valor_de_avaliacao" class="form-control" style="color: black;">
+                    {% if form.valor_de_avaliacao.errors %}
+                        <span class="text-red-500">{{ form.valor_de_avaliacao.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_valor_de_venda" class="text-white">Valor de Venda:</label>
+                    <input type="text" name="valor_de_venda" id="id_valor_de_venda" class="form-control" style="color: black;">
+                    {% if form.valor_de_venda.errors %}
+                        <span class="text-red-500">{{ form.valor_de_venda.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_documentacao" class="text-white">Documentação:</label>
+                    <input type="file" name="documentacao" id="id_documentacao" class="form-control" style="color: black;">
+                    {% if form.documentacao.errors %}
+                        <span class="text-red-500">{{ form.documentacao.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_imagens" class="text-white">Imagens:</label>
+                    <input type="file" name="imagens" id="id_imagens" class="form-control" multiple accept="image/*">
+                    {% if form.imagens.errors %}
+                        <span class="text-red-500">{{ form.imagens.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_imagem_de_capa" class="text-white">Imagem de Capa:</label>
+                    <input type="file" name="imagem_de_capa" id="id_imagem_de_capa" class="form-control" accept="image/*">
+                    {% if form.imagem_de_capa.errors %}
+                        <span class="text-red-500">{{ form.imagem_de_capa.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_localizacao" class="text-white">Localização:</label>
+                    <select name="localizacao" id="id_localizacao" class="form-control" style="color: black;">
+                        <option value="Valparaiso_de_Goias">Valparaiso de Goiás - Goiás</option>
+                        <option value="Cidade_Ocidental">Cidade Ocidental - Goiás</option>
+                        <option value="Jardim_Ingá">Jardim Ingá - Goias</option>
+                        <option value="Luziania">Luziânia - Goias</option>
+                        <option value="Brasilia">Brasília - Distrito Federal</option>
+                    </select>
+                    {% if form.localizacao.errors %}
+                        <span class="text-red-500">{{ form.localizacao.errors.0 }}</span>
+                    {% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_exclusivo" class="text-white">Exclusivo:</label>
+                    <select name="exclusivo" id="id_exclusivo" class="form-control" style="color: black;">
+                        <option value="sim">Sim</option>
+                        <option value="nao">Não</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_tem_inquilino" class="text-white">Tem Inquilino:</label>
+                    <select name="tem_inquilino" id="id_tem_inquilino" class="form-control" style="color: black;">
+                        <option value="sim">Sim</option>
+                        <option value="nao">Não</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="id_situacao_do_imovel" class="text-white">Situação do Imóvel:</label>
+                    <textarea name="situacao_do_imovel" id="id_situacao_do_imovel" class="form-control" style="color: black;"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="id_observacoes" class="text-white">Observações:</label>
+                    <textarea name="observacoes" id="id_observacoes" class="form-control" style="color: black;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Adicionar Imóvel</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        // Função para formatar o campo com R$ e separadores de milhares e vírgula como separador decimal
+        function formatCurrencyField(id) {
+            $(id).on('input', function () {
+                var valor = $(this).val().replace(/\D/g, ''); // Remover todos os não dígitos
+                if (valor.length > 0) {
+                    valor = parseFloat(valor / 100).toFixed(2); // Dividir por 100 para tratar como centavos
+                    valor = valor.replace('.', ','); // Trocar ponto por vírgula como separador decimal
+                    valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.'); // Adicionar separadores de milhares
+                }
+                $(this).val(valor);
+            });
+        }
+        $(document).ready(function () {
+            $('#id_tags').tagInput();
+        });
+
+        // Chamar a função para formatar o campo "Valor de Avaliação"
+        formatCurrencyField('#id_valor_de_avaliacao');
+
+        // Chamar a função para formatar o campo "Valor de Venda"
+        formatCurrencyField('#id_valor_de_venda');
+    });
+</script>
+{% endblock %}

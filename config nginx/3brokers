@@ -1,0 +1,51 @@
+server {
+    server_name 3brokers.com.br;
+
+    # Configuração para servir arquivos estáticos
+    location /static/ {
+        alias /home/crm/static/;
+        # Habilitar cache para recursos estáticos
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    # Configuração para servir arquivos de mídia
+    location /media/ {
+        alias /home/crm/media/;
+        # Habilitar cache para mídia
+        expires 30d;
+        add_header Cache-Control "public";
+    }
+
+    # Configuração para encaminhar todas as outras solicitações para o aplicativo Django
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Port $server_port;
+        proxy_set_header X-CSRFToken $http_csrf_token;
+        proxy_set_header Cookie $http_cookie;
+    }
+
+    listen 443 ssl http2; # Habilitar HTTP/2
+    ssl_certificate /etc/letsencrypt/live/3brokers.com.br/fullchain.pem; # Gerenciado pelo Certbot
+    ssl_certificate_key /etc/letsencrypt/live/3brokers.com.br/privkey.pem; # Gerenciado pelo Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # Gerenciado pelo Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # Gerenciado pelo Certbot
+
+    # Configurações adicionais de segurança podem ser adicionadas aqui
+}
+
+server {
+    if ($host = 3brokers.com.br) {
+        return 301 https://$host$request_uri;
+    } # Gerenciado pelo Certbot
+
+    listen 80;
+    server_name 3brokers.com.br;
+    return 404; # Gerenciado pelo Certbot
+}
+

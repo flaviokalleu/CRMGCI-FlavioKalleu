@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block main_content %}
+<style>
+    .bg-white {
+        background-color: #191c24 !important;
+        color:white;
+    }
+</style>
+<div class="container-fluid py-4 px-2 sm:px-4">
+    <div class="p-3 sm:p-6 bg-white rounded-lg shadow-lg">
+        <h2 class="text-xl sm:text-2xl font-bold text-center mb-4">Cadastrar Corretor</h2>
+        <p class="text-center text-gray-600 mb-4">Insira suas informações abaixo. Por favor, não inclua o "9" no número de telefone.</p>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">
+                    {% if field.label == "Username" %}
+                    Nome de usuário
+                    {% elif field.label == "First name" %}
+                    Primeiro nome
+                    {% elif field.label == "Last name" %}
+                    Sobrenome
+                    {% elif field.label == "Photo" %}
+                    Foto
+                    {% else %}
+                    {{ field.label }}
+                    {% endif %}
+                </label>
+                {% if field.name == "telefone" %}
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text">+55</span>
+                    </div>
+                    <input id="{{ field.id_for_label }}" type="text" name="{{ field.name }}" class="form-control" placeholder="DDD Número">
+                </div>
+                {% elif field.name == "password" %}
+                <input id="{{ field.id_for_label }}" type="password" name="{{ field.name }}" autocomplete="off" class="form-control">
+                {% elif field.name == "photo" %}
+                <label for="formFile" class="form-label">Foto</label>
+                <input class="form-control bg-dark" type="file" id="formFile" name="{{ field.name }}" accept="image/*">
+                {% else %}
+                <input id="{{ field.id_for_label }}" type="text" name="{{ field.name }}" autocomplete="off" class="form-control">
+                {% endif %}
+                {% if field.errors %}
+                <p class="text-sm text-red-500">{{ field.errors.0 }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Enviar</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

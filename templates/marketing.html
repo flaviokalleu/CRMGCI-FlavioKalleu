@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}Marketing{% endblock %}
+{% load custom_tags %}
+{% block main_content %}
+<div class="container py-4">
+    <h2 class="text-center text-3xl font-semibold mb-4">Materiais de Marketing</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+        {% for material in materiais %}
+        <div class="col">
+            <div class="card h-100">
+                <img src="{{ material.imagem.url }}" class="card-img-top" alt="{{ material.titulo }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ material.titulo }}</h5>
+                    <p class="card-text">{{ material.descricao }}</p>
+                </div>
+                <div class="card-footer">
+                    <a href="{{ material.arquivo.url }}" class="btn btn-primary" download>Baixar Material</a>
+                    <form method="post" action="{% url 'excluir_material' material.id %}" class="d-inline">
+                        {% csrf_token %}
+                        {% if not request.user|is_corretor %}
+                        <button type="submit" class="btn btn-danger">Excluir Material</button>
+                        {% endif %}  
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% if not request.user|is_corretor %}
+    <div class="text-center mt-4">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#adicionarMaterialModal">Adicionar Material</button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para adicionar material -->
+<div class="modal fade" id="adicionarMaterialModal" tabindex="-1" aria-labelledby="adicionarMaterialModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="adicionarMaterialModalLabel">Adicionar Novo Material de Marketing</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <form method="post" action="{% url 'adicionar_material' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="modal-body">
+            <div class="mb-3">
+                <label for="titulo" class="form-label">Título:</label>
+                <input type="text" class="form-control" id="titulo" name="titulo" required>
+            </div>
+            <div class="mb-3">
+                <label for="descricao" class="form-label">Descrição:</label>
+                <textarea class="form-control" id="descricao" name="descricao" rows="3" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="imagem" class="form-label">Imagem:</label>
+                <input type="file" class="form-control" id="imagem" name="imagem" accept="image/*" required>
+            </div>
+            <div class="mb-3">
+                <label for="arquivo" class="form-label">Arquivo:</label>
+                <input type="file" class="form-control" id="arquivo" name="arquivo" required>
+            </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+          <button type="submit" class="btn btn-primary">Adicionar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

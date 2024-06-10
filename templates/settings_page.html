@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <title>Configurações</title>
+{% endblock %}
+
+{% block content %}
+    <div class="container mx-auto p-8">
+        <h1 class="text-3xl font-bold mb-8">Configurações</h1>
+
+        <!-- Formulário de Backup -->
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4">Fazer Backup</h2>
+            <form method="post" enctype="multipart/form-data" class="space-x-4">
+                {% csrf_token %}
+                {{ form }}
+                <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Enviar</button>
+            </form>
+
+            <!-- Mensagem de Erro de Backup -->
+            {% if form.errors %}
+                <div class="mt-4 text-red-600">
+                    {% for error in form.errors %}
+                        {{ error }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Lista de Backups -->
+        <div>
+            <h2 class="text-xl font-semibold mb-4">Backups</h2>
+            <ul>
+                {% for backup in backups %}
+                    <li class="mb-2">
+                        {{ backup.name }} - {{ backup.timestamp }}
+                        <a href="{% url 'download_backup' backup.id %}" class="text-blue-500 hover:underline ml-2">Download</a>
+
+                        <!-- Formulário oculto para restauração -->
+                        <form method="post" action="{% url 'restore_backup' backup.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="text-green-500 hover:underline ml-2">Restaurar</button>
+                        </form>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Mensagem de Erro de Restauração -->
+        {% if error_message %}
+            <div class="mt-4 text-red-600">
+                {{ error_message }}
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

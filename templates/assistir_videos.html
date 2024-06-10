@@ -1,0 +1,131 @@
+﻿<!-- assistir_videos.html -->
+{% extends 'base.html' %}
+
+{% block main_content %}
+<h2 class="text-center mb-4">Vídeos Disponíveis</h2>
+
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+  {% for video in videos %}
+  <div class="bg-gray-800 rounded p-4 flex flex-col justify-between">
+    <div>
+      <h3 class="text-white">{{ video.title }}</h3>
+      <p class="text-center text-gray-400">{{ video.description }}</p>
+
+      <div class="video-container">
+        <video
+          id="player-{{ video.id }}"
+          class="video-js"
+          controls
+          width="350"
+          height="225"
+        >
+          <source
+            src="{% if video.video_file %}{{ video.video_file.url }}{% elif video.video_url %}//site.com/{{ video.video_url|cut:'https://www.youtube.com/watch?v=' }}{% endif %}"
+            type="video/mp4"
+          />
+        </video>
+      </div>
+    </div>
+
+    <div class="flex justify-center mt-4">
+      {% if user.is_authenticated %}
+        {% if video.id in user_viewed_videos %}
+          <p class="text-green-500">Você já assistiu a este vídeo.</p>
+        {% else %}
+          
+        {% endif %}
+      {% endif %} 
+
+      {% if user.is_staff %}
+        <button
+          class="btn btn-danger btn-sm"
+          onclick="deleteVideo('{{ video.id }}')"
+        >
+          Deletar
+        </button>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<script src="https://cdn.plyr.io/3.6.2/plyr.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    {% for video in videos %}
+    const player{{ video.id }} = new Plyr('#player-{{ video.id }}');
+
+    player{{ video.id }}.on('play', function () {
+      if (!{{ user.id }}) {
+        // O usuário não está autenticado, então não registramos visualização
+        return;
+      }
+
+      // Adicione a lógica para registrar o início do vídeo com a duração assistida
+      fetch("{% url 'registrar_inicio_video' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          video_id: '{{ video.id }}',
+          duration_watched: Math.floor(player{{ video.id }}.currentTime),
+          total_duration: Math.floor(player{{ video.id }}.duration)
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          console.log('Registro de início de vídeo bem-sucedido');
+        } else {
+          console.error('Erro ao registrar o início do vídeo');
+        }
+      });
+    });
+    {% endfor %}
+  });
+
+  function startVideo(videoId) {
+    const player = Plyr.setup(`#player-${videoId}`)[0];
+    player.play();
+  }
+
+  function deleteVideo(videoId) {
+    if (confirm("Tem certeza que deseja deletar este vídeo?")) {
+      fetch("{% url 'delete_video' %}", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: JSON.stringify({
+          video_id: videoId,
+        })
+      })
+      .then(response => {
+        if (response.ok) {
+          // Atualizar a página após a exclusão bem-sucedida
+          location.reload();
+        } else {
+          // Lidar com erros de exclusão, se necessário
+          console.error('Erro ao deletar o vídeo');
+        }
+      });
+    }
+  }
+</script>
+
+<style>
+  .video-container {
+    position: relative;
+    width: 350px;
+    height: 225px;
+    margin: 0 auto; /* Centraliza horizontalmente */
+  }
+  .video-js {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+  }
+</style>
+{% endblock %}

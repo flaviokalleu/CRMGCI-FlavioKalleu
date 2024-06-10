@@ -1,0 +1,495 @@
+{% extends 'base.html' %}
+{% load custom_tags %}
+{% load static %}
+{% load custom_filters %}
+{% block main_content %}    
+
+    <body class="g-sidenav-show bg-gray-100">         
+        <!-- Tabela de Clientes -->
+        <main class="main-content position-relative border-radius-lg">
+            {% if messages %}
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+            <div class="container-fluid py-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="h2">Clientes</h2>
+
+                    
+                </div>
+                <div class="card p-4">
+                    
+                    <!-- Adicione este bloco acima da tabela existente -->
+                    <div class="">
+                        <input type="text" placeholder="Pesquisar cliente..." id="searchInput" class="input-group p-2 rounded-md w-64 focus:ring-2 focus:ring-indigo-600 focus:outline-none text-black">
+
+                        <div>
+                            <form action="{% url 'lista_processos' %}" method="get" class="form-container pl-3 pr-3">
+                                <div class="row">
+                                    <div class="col-md-2 mb-3">
+                                        <label for="filtroTipo" class="form-label">Tipo:</label>
+                                        <select id="filtroTipo" name="filtroTipo" class="form-select">
+                                            <option value="">Todos os tipos</option>
+                                            <option value="usado">Usado</option>
+                                            <option value="novo">Novo</option>
+                                            <option value="agio">Ágio</option>
+                                        </select>
+                                    </div>
+                            
+                                    <div class="col-md-2 mb-3">
+                                        <label for="filtroResponsaveis" class="form-label">Responsáveis:</label>
+                                        <select id="filtroResponsaveis" name="filtroResponsaveis" class="form-select">
+                                            <option value="">Todos os responsáveis</option>
+                                            {% for corretor in corretores %}
+                                            <option value="{{ corretor.id }}">{{ corretor.first_name }} {{ corretor.last_name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                            
+                                    <div class="col-md-2 mb-3">
+                                        <label for="filtroProprietarios" class="form-label">Proprietários:</label>
+                                        <select id="filtroProprietarios" name="filtroProprietarios" class="form-select">
+                                            <option value="">Todos os proprietários</option>
+                                            {% for proprietario in proprietarios %}
+                                            <option value="{{ proprietario.id }}">{{ proprietario.nome }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                            
+                                    <div class="col-md-2 mb-3">
+                                        <label for="filtroProgresso" class="form-label">Progresso:</label>
+                                        <select id="filtroProgresso" name="filtroProgresso" class="form-select">
+                                            <option value="">Todos os progressos</option>
+                                            <option value="concluido">Concluído</option>
+                                            <option value="nao_concluido">Não Concluído</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-3">
+                                        <label for="filtroOpcoes" class="form-label">Opções Selecionadas:</label>
+                                        <select id="filtroOpcoes" name="filtroOpcoes" class="form-select">
+                                            <option value="">Todas as opções</option>
+                                            <option value="Pendente">Pendente</option>
+                                            <option value="Conformidade">Conformidade</option>
+                                            <option value="Conforme">Conforme</option>
+                                            <option value="Inconforme">Inconforme</option>
+                                            <option value="Emissão de minuta">Emissão de minuta</option>
+                                            <option value="Contrato assinado">Contrato assinado</option>
+                                            <option value="Aguardando Comissão">Aguardando Comissão</option>
+                                            <option value="Entrega de chaves">Entrega de chaves</option>
+                                            <option value="Aguardando Laudo">Aguardando Laudo</option>
+                                            <option value="Catorio">Catorio</option>
+                                            <option value="Finalizado">Finalizado</option>
+                                        </select>
+                                    </div>
+                                    
+                                    
+                                    
+                            
+                                    <div class="col-md-2 mb-3">
+                                        <label for="dataInicio" class="form-label">Data de Início:</label>
+                                        <input type="date" id="dataInicio" name="dataInicio" class="form-control">
+                                    </div>
+                            
+                                    <div class="col-md-2 mb-2">
+                                        <label for="dataFim" class="form-label">Data de Fim:</label>
+                                        <input type="date" id="dataFim" name="dataFim" class="form-control">
+                                        
+                                    </div>
+                            
+                                    <div class="col-md-1 mb-2 justify-content-center">
+                                        <button type="submit" class="btn btn-primary btn-sm">Buscar</button>
+                                    </div>
+                                </div>
+                            </form>
+                    </div>
+                    <div class="flex items-center">
+                        {% if not request.user|is_corretor %}
+                        <button onclick="abrirModal()" class="btn btn-outline-success m-2">
+                            Adicionar Processo
+                        </button>
+                        {% endif %}   
+                         </div>  
+                   
+                                  
+                    
+                    <div class="table-responsive" id="conteudoLista">
+                        <table class="table table-striped table-hover text-center">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Tipo</th>
+                                    <th>Status</th>
+                                    <th>Notas</th>
+                                    <th>Corretor Responsável</th>                                     
+                                    <th>Proprietário</th>
+                                    <th>Data de Início</th>
+                                    <th>Data de Finalização</th>                                                                      
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for processo in processos %}
+                                <tr {% if processo.data_finalizacao %}class=""{% endif %}>
+                                    <td class="align-middle text-white">{{ processo.cliente.nome }}</td>
+                                    <td class="align-middle text-white">{{ processo.tipo }}</td>
+                                    {% if processo.opcoes_selecionadas.exists %}
+                                        {% with processo.opcoes_selecionadas.last as ultima_opcao %}
+                                            {% if ultima_opcao.opcao == 'Pendente' %}
+                                                <td class="align-middle text-white bg-danger">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Aguardando Laudo' %}
+                                                <td class="align-middle text-white bg-light">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Conformidade' %}
+                                                <td class="align-middle text-white bg-primary">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Inconforme' %}
+                                                <td class="align-middle text-white bg-warning text-dark">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Conforme' %}
+                                                <td class="align-middle text-white bg-success">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Emissão de minuta' %}
+                                                <td class="align-middle text-white bg-info">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Contrato assinado' %}
+                                                <td class="align-middle text-white bg-dark">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Cartório' %}
+                                                <td class="align-middle text-white bg-warning">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Aguardando Comissão' %}
+                                                <td class="align-middle text-white bg-warning text-dark">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Entrega de chaves' %}
+                                                <td class="align-middle text-white bg-success text-dark">{{ ultima_opcao.opcao }}</td>
+                                            {% elif ultima_opcao.opcao == 'Finalizado' %}
+                                                <td class="align-middle text-white bg-info">{{ ultima_opcao.opcao }}</td>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <td class="align-middle text-white bg-dark">Sem Status</td>
+                                    {% endif %}
+                                    <td class="align-middle text-white">
+                                        {% if processo.num_notas > 0 %}
+                                            <a href="#" data-bs-toggle="modal" data-bs-target="#notaModal-{{ processo.cliente.id }}">
+                                                <span class="badge {% if processo.num_notas_nao_concluidas > 0 %}bg-danger{% else %}bg-secondary{% endif %}">{{ processo.num_notas }}</span>
+                                            </a>
+                                        {% else %}
+                                            <span class="badge bg-secondary">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="align-middle text-white">
+                                        {% for responsavel in processo.responsaveis.all %}
+                                            {{ responsavel.first_name }} {{ responsavel.last_name }}
+                                            {% if not forloop.last %}, {% endif %}
+                                        {% empty %}
+                                            Nenhum responsável
+                                        {% endfor %}
+                                    </td>
+                                    <td class="align-middle text-white">{{ processo.proprietario.nome }}</td>
+                                    <td class="align-middle text-white">{{ processo.data_inicio }}</td>
+                                    <td class="align-middle text-white">{{ processo.data_finalizacao }}</td>
+                                    <td class="align-middle text-white">
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Ações
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a href="{% url 'editar_processo' processo.id %}" target="_blank" class="dropdown-item">Editar processo</a>
+                            
+                                                <button type="button" class="dropdown-item" data-toggle="modal" data-target="#addNoteModal" data-cliente-id="{{ processo.cliente.id }}" data-processo-id="{{ processo.id }}">
+                                                    Adicionar Nota
+                                                </button>
+                                                <form method="POST" action="{% url 'finalizar_processo' processo.id %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="processo_id" value="{{ processo.id }}">
+                                                    <button type="submit" class="dropdown-item">Finalizar processo</button>
+                                                </form>
+                                                <form id="delete-form-{{ processo.id }}" action="{% url 'deletar_processo' processo.id %}" method="post" style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="button" class="dropdown-item text-danger" onclick="confirmarExclusao('{{ processo.id }}')">Excluir processo</button>
+                                                </form>
+                                                <a href="{% if processo.cliente %}{% url 'detalhes_do_processo' cliente_id=processo.cliente.id processo_id=processo.id %}{% endif %}" class="dropdown-item">Ver detalhes</a>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            
+                            
+                        </table>
+                    </div>
+                    
+                    <script>
+                        function confirmarExclusao(processoId) {
+                            if (confirm("Tem certeza de que deseja excluir este processo?")) {
+                                document.getElementById('delete-form-' + processoId).submit();
+                            }
+                        }
+                    </script>
+                    
+                    
+                </div>
+                {% for processo in processos %}
+    <div class="modal fade" id="notaModal-{{ processo.cliente.id }}" tabindex="-1" role="dialog" aria-labelledby="notaModalLabel-{{ processo.cliente.id }}" aria-hidden="true">     <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notaModalLabel{{ processo.id }}">Notas do Processo</h5>
+                    <button type="button" class="close modal-close" aria-label="Close" data-bs-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="container-fluid">
+                        <ul class="list-group">
+                            {% for nota in processo.get_notas %}
+                            <li id="nota{{ nota.id }}" class="list-group-item mb-3">
+                                {{ nota.texto }}
+                                {% if user.is_staff or user.is_superuser or user.is_correspondente %}
+
+                                <div class="btn-group float-right">
+                                    <form method="POST" action="{% url 'enviarmensagemcorrespondente' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="nota_id" value="{{ nota.id }}">
+                                        <input type="hidden" name="processo_id" value="{{ processo.id }}">
+                                        <button type="submit" class="btn btn-primary btn-sm">Enviar Mensagem</button>
+                                    </form>
+                                    <form method="POST" action="{% url 'deletar_nota' nota.id %}" style="display: inline;">
+
+                                        {% csrf_token %}
+                                        <input type="hidden" name="processo_id" value="{{ processo.id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Excluir Nota</button>
+                                    </form>
+                                </div>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary modal-close" data-bs-dismiss="modal">Fechar</button>
+                </div>
+                
+            </div>
+        </div>
+    </div>
+{% endfor %}
+<!-- Modal de adição de processo -->
+<!-- Modal de Adicionar Processo -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Adicionar Processo</h5>
+                <button type="button" class="close modal-close" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Formulário de adição de processo -->
+                <form method="POST" action="{% url 'add_processo' %}">
+                    {% csrf_token %}
+                    <!-- Campo oculto para armazenar o ID do cliente -->
+                    <input type="hidden" name="cliente_id" value="{{ cliente.id }}">
+                    <div class="form-group">
+                        <label for="cliente">Cliente</label>
+                        <select class="form-control" id="cliente" name="cliente">
+                            {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="proprietario">Proprietário</label>
+                        <select class="form-control" id="proprietario" name="proprietario">
+                            {% for proprietario in proprietarios %}
+                                <option value="{{ proprietario.id }}">{{ proprietario.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="tipo">Tipo</label>
+                        <select class="form-control" id="tipo" name="tipo">
+                            <option value="Agio">Agio</option>
+                            <option value="Novo">Novo</option>
+                            <option value="Usado">Usado</option>
+                        </select>
+                        
+                    </div>
+                    <div class="form-group">
+                        <label for="imoveis">Imóveis</label>
+                        <select class="form-control" id="imoveis" name="imoveis">
+                            {% for imovel in imoveis_disponiveis %}
+                                <option value="{{ imovel.id }}">{{ imovel.nome_do_imovel }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsaveis">Responsáveis</label>
+                        <select class="form-control" id="responsaveis" name="responsaveis">
+                            {% for corretor in corretores %}
+                                <option value="{{ corretor.id }}">{{ corretor.first_name }} {{ corretor.last_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Adicione outros campos conforme necessário -->
+                    <button type="button" class="btn btn-secondary modal-close">Fechar</button>
+                    <button type="submit" class="btn btn-primary">Salvar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Notas -->
+<div class="modal fade" id="addNoteModal" tabindex="-1" role="dialog" aria-labelledby="addNoteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addNoteModalLabel">Adicionar Nota</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Formulário para adicionar uma nota -->
+                <form method="post" id="addNoteForm">
+                    {% csrf_token %}
+                    <!-- Adicionando um campo oculto para enviar o nome do cliente -->
+                    <input type="hidden" id="cliente_nome" name="cliente_nome" value="{{ processo.cliente.nome }}">
+                    <!-- Dropdown para selecionar cliente -->
+                    <div class="form-group">
+                        <label for="cliente">Selecione o cliente:</label>
+                        <select class="form-control" id="cliente" name="cliente" required>
+                            <option value="">Selecione o cliente</option>
+                            {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}">{{ cliente.nome }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <!-- Dropdown para selecionar destinatário -->
+                    <div class="form-group">
+                        <label for="noteRecipient">Selecione o destinatário:</label>
+                        <select class="form-control" id="noteRecipient" name="note_recipient" required>
+                            <option value="owner">Proprietário</option>
+                            <option value="broker">Corretor</option>
+                        </select>
+                    </div>
+                    <!-- Área de texto para inserir a nota -->
+                    <div class="form-group">
+                        <label for="noteText">Digite a nota:</label>
+                        <textarea class="form-control" id="noteText" name="note_text" rows="3" required></textarea>
+                    </div>
+                    <!-- Botão de envio -->
+                    <button type="submit" class="btn btn-primary">Enviar Nota</button>
+                </form>
+            </div>            
+            
+        </div>
+    </div>
+</div>
+<script>
+    $('#addNoteModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget); // Botão que acionou o modal
+        var clienteId = button.data('cliente-id'); // Extrai o ID do cliente do botão
+        var processoId = button.data('processo-id'); // Extrai o ID do processo do botão
+        var modal = $(this);
+        
+        // Define a ação do formulário com os IDs do cliente e do processo
+        modal.find('#addNoteForm').attr('action', '/nova-nota/' + clienteId + '/' + processoId + '/');
+    });
+</script>
+
+
+<!-- Bootstrap JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+    // Função para fechar o modal quando o botão de fechar é clicado
+    $(document).ready(function(){
+        $('.modal-close').click(function(){
+            $('#myModal').modal('hide');
+        });
+    });
+</script>
+<script>
+    // Função para focar em um elemento dentro do modal quando ele é mostrado
+    $('#myModal').on('shown.bs.modal', function () {
+        $('#myInput').trigger('focus');
+    });
+
+    // Função para abrir o modal
+    function abrirModal() {
+        $('#myModal').modal('show');
+    }
+
+    // Função para alternar entre a exibição da seção de tabela e a seção de gráfico
+    function showTableSection() {
+        document.getElementById("tableSection").style.display = "block";
+        document.getElementById("graficoSection").style.display = "none";
+    }
+
+    function showGraficoSection() {
+        document.getElementById("tableSection").style.display = "none";
+        document.getElementById("graficoSection").style.display = "block";
+        // Aqui você pode adicionar o código para exibir o gráfico
+    }
+</script>
+<script>
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        var searchValue = this.value.trim().toLowerCase();
+    
+        // Pesquisa na Tabela
+        var tableRows = document.querySelectorAll('#conteudoLista tbody tr');
+        var found = false; // Variável para verificar se pelo menos um cliente foi encontrado
+
+        tableRows.forEach(function(row) {
+            var nomeCliente = row.querySelector('td:nth-child(1)').textContent.trim().toLowerCase();
+            if (nomeCliente.includes(searchValue)) {
+                row.style.display = '';
+                found = true; // Um cliente foi encontrado
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Exibir alerta se nenhum cliente for encontrado
+        if (!found) {
+            alert("Nenhum cliente encontrado.");
+        }
+    });
+    // Supondo que você esteja usando jQuery para fazer a requisição AJAX
+
+$(document).ready(function() {
+    $('form').submit(function(event) {
+        
+
+        // Captura o formulário atual
+        var form = $(this);
+
+        // Faz a requisição AJAX para finalizar o processo
+        $.ajax({
+            type: form.attr('method'),
+            url: form.attr('action'),
+            data: form.serialize(), // Serializa os dados do formulário
+            success: function(response) {
+                // Recarrega a página após finalizar o processo
+                location.reload();
+            },
+            error: function(xhr, errmsg, err) {
+                console.log('Erro ao finalizar o processo:', err);
+                // Exibe uma mensagem de erro genérica, se ocorrer algum problema na requisição
+                alert('Erro ao finalizar o processo. Por favor, tente novamente.');
+            }
+        });
+    });
+});
+
+
+</script>
+
+
+
+    </body>
+{% endblock %}
+

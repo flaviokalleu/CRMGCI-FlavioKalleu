@@ -1,0 +1,588 @@
+{% extends 'base.html' %} {% load custom_tags %} {% block main_content %}
+<!DOCTYPE html>
+<html lang="pt-br">
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <title>
+        Lista de Clientes
+    </title>
+    <!-- Kanban scripts -->
+
+    <link href="{% static 'assets/css/listacliente.css' %}" rel="stylesheet">
+
+</head>
+
+<body class="g-sidenav-show bg-gray-100">
+
+
+    <!-- Tabela de Clientes -->
+    <main class="main-content position-relative border-radius-lg">
+        <div class="container-fluid py-4">
+            <div class="flex justify-between items-center mb-6">
+
+                {% if messages %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {% for message in messages %} {{ message }} {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endif %}
+
+            </div>
+            <div class="col-12">
+
+                <div class="bg-secondary rounded h-100 p-4">
+                    <h6 class="mb-4">Lista de Clientes</h6>
+                    <input type="text" placeholder="Pesquisar cliente..." id="searchInput" class="input-group p-2 rounded-md w-64 focus:ring-2 focus:ring-indigo-600 focus:outline-none text-black">
+                    <form method="GET" action="{% url 'lista_de_clientes' %}">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="statusFilter" class="form-label">Status:</label>
+                                <select class="form-control" id="statusFilter" name="status">
+                                    <option value="">Todos</option>
+                                    <option value="aguardando_aprovacao">Aguardado Aprovação</option>
+                                    <option value="documentacao_pendente">Documentação Pendente</option>
+                                    <option value="aguardando_cancelamento_qv">Aguardando Cancelamento / QV</option>
+                                    <option value="cliente_aprovado">Cliente Aprovado</option>
+                                    <option value="reprovado">Cliente Reprovado</option>
+                                    <option value="proposta_apresentada">Proposta Apresentada</option>
+                                    <option value="visita_efetuada">Visita Efetuada</option>
+                                    <option value="nao_deu_continuidade">Não Deu Continuidade</option>
+                                    <option value="venda_concluida">Venda Concluída</option>
+                                    <option value="fechamento_proposta">Fechamento de Proposta</option>
+                                    <option value="processo_em_aberto">Processo em Aberto</option>
+                                    <option value="reprovado">Reprovado</option>
+                                </select>
+
+
+                            </div>
+                            <div class="col-md-3">
+                                <label for="corretorFilter" class="form-label">Corretor:</label>
+                                <select class="form-control" id="corretorFilter" name="corretor">
+                                    <option value="">Todos</option>
+                                    {% for corretor in corretores %}
+                                    <option value="{{ corretor.pk }}">{{ corretor.first_name }} {{ corretor.last_name }}</option>
+                                    {% endfor %}
+
+
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="dataInicioFilter" class="form-label">Data Início:</label>
+                                <input type="date" class="form-control" id="dataInicioFilter" name="data_inicio">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="dataFimFilter" class="form-label">Data Fim:</label>
+                                <input type="date" class="form-control" id="dataFimFilter" name="data_fim">
+                            </div>
+
+                            <div class="col-md-3">
+                                <button type="submit" class="btn btn-primary mt-4">Aplicar Filtros</button>
+                            </div>
+                        </div>
+                    </form>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase mb-0 text-s text-xxs font-weight-bolder opacity-7">Nome</th>
+                                    <th class="text-center text-uppercase mb-0 text-s text-xxs font-weight-bolder opacity-7">Status</th>
+                                    <th class="text-center text-uppercase mb-0 text-s text-xxs font-weight-bolder opacity-7">Dia do Cadastro</th>
+                                    <th class="text-center text-uppercase mb-0 text-s text-xxs font-weight-bolder opacity-7">Nome Corretor</th>
+                                    {% if not request.user|is_corretor %}
+                                    <th class="text-center text-uppercase mb-0 text-s text-xxs font-weight-bolder opacity-7">Detalhes</th>
+                                    {% endif %}
+                                    <th class="text-center text-uppercase mb-0 text-s text-xxs font-weight-bolder opacity-7">Notas</th>
+                                    {% if not request.user|is_corretor %}
+                                    <th class="mb-0 text-s opacity-7"></th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cliente in clientes %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-xs text-white">{{ cliente.nome }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="align-middle text-center mb-0 text-xs">
+                                        <button class="btn {% if cliente.status == 'aguardando_aprovacao' %}btn-outline-warning{% elif cliente.status == 'documentacao_pendente' or cliente.status == 'aguardando_cancelamento_qv' or cliente.status == 'reprovado' %}btn-danger{% elif cliente.status == 'cliente_aprovado' or cliente.status == 'proposta_apresentada' or cliente.status == 'venda_concluida' or cliente.status == 'processo_em_aberto' or cliente.status == 'concluido' %}btn-success{% elif cliente.status == 'visita_efetuada' %}btn-info{% elif cliente.status == 'nao_deu_continuidade' %}btn-secondary{% else %}btn-secondary{% endif %} m-2">
+                                            {{ cliente.get_status_display }}
+                                        </button>
+                                    </td>
+                                    
+                                    <td class="align-middle text-center">
+                                        <span class="mb-0 text-s text-xs font-weight-bold text-white ">{{ cliente.data_de_criacao }}</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <span class="mb-0 text-s text-xs font-weight-bold text-white">{{ cliente.corretor.first_name }} {{ cliente.corretor.last_name }}</span>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <button onclick="abrirModal({{ cliente.id }})" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#clienteModal">Ver detalhes</button>
+                                    </td>
+                                    <td class="align-middle text-center">
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#notaModal-{{ cliente.id }}">
+                                                    <span class="badge {% if cliente.notas_count > 0 %}bg-danger{% else %}bg-secondary{% endif %}">
+                                                        {{ cliente.notas_count }}
+                                                    </span>
+                                                </a>
+                                    </td>
+
+
+                                    <td class="align-middle text-center">
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                Ações
+                                            </button>
+                                            <div class="dropdown-menu">
+                                                <a href="{% url 'editar_cliente' cliente_id=cliente.id %}" class="dropdown-item">Editar</a>
+                                                <a href="{% url 'editar_pdf' cliente.id 'pessoais' %}" target="_blank" class="dropdown-item">Editar Documentos Pessoais</a>
+                                                <a href="{% url 'editar_pdf' cliente.id 'extrato' %}" target="_blank" class="dropdown-item">Editar Extrato Bancário</a>
+                                                <a href="{% url 'editar_pdf' cliente.id 'dependente' %}" target="_blank" class="dropdown-item">Editar Documentos Dependente</a> {% if not request.user|is_corretor %}
+                                                <form method="POST" action="{% url 'deletar_cliente' cliente.id %}" onsubmit="return confirm('Tem certeza que deseja deletar este cliente?')">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="dropdown-item text-danger">Deletar</button>
+                                                </form>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        </div>
+        <!-- Modal de Detalhes do Cliente -->
+        <div class="modal fade" id="clienteModal" tabindex="-1" id="dark-version" role="dialog" aria-labelledby="clienteModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="dialog" style="display: block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="clienteModalLabel">Detalhes do Cliente</h5>
+
+                        <button type="button" onclick="fecharModal()" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+
+                    </div>
+                    <div class="modal-body">
+                        <div class="row text-white">
+                            <div class="col-md-6 mb-0 text-s"><strong>Nome:</strong> <span id="modalNome"></span></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Email:</strong> <span id="modalEmail"></span></div>
+                            <div class="w-100"></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Telefone:</strong> <span id="modalTelefone"></span></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>CPF:</strong> <span id="modalCPF"></span></div>
+                            <div class="w-100"></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Estado Civil:</strong> <span id="modalEstadoCivil"></span></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Naturalidade:</strong> <span id="modalNaturalidade"></span></div>
+                            <div class="w-100"></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Profissão:</strong> <span id="modalProfissao"></span></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Data de Admissão:</strong> <span id="modalDataAdmissao"></span></div>
+                            <div class="w-100"></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Data de Nascimento:</strong> <span id="modalDataNascimento"></span></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Tipo de Renda:</strong> <span id="modalRendaTipo"></span></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Valor de Renda:</strong> <span id="modalvalorrenda"></span></div>
+
+                            <div class="w-100"></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Possui Carteira 3 anos:</strong> <span id="modalPossuiCarteira"></span></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Número PIS:</strong> <span id="modalNumeroPIS"></span></div>
+                            <div class="w-100"></div>
+                            <div class="col-md-6 mb-0 text-s"><strong>Possui Dependente:</strong> <span id="modalPossuiDependente"></span></div>
+                            <div class="col-md-6 mb-0 text-s">
+                                <label for="modalStatusInput" class="mb-2 font-semibold text-s text-white"><strong>Status:</strong></label>
+                                <select id="modalStatusInput" name="status" class="form-control form-control-l">
+                                    <option value="aguardando_aprovacao">Aguardado Aprovação</option>
+                                    <option value="reprovado">Cliente Reprovado</option>
+                                    <option value="cliente_aprovado">Cliente Aprovado</option>
+                                    <option value="documentacao_pendente">Documentação Pendente</option>
+                                    <option value="aguardando_cancelamento_qv">Aguardando Cancelamento / QV</option>
+                                    <option value="proposta_apresentada">Proposta Apresentada</option>
+                                    <option value="visita_efetuada">Visita Efetuada</option>
+                                    <option value="fechamento_proposta">Fechamento Proposta</option>
+                                    <option value="processo_em_aberto">Processo Aberto</option>                                   
+                                    <option value="nao_deu_continuidade">Não Deu Continuidade</option>
+                                </select>
+
+
+
+                            </div>
+                        </div>
+
+                        <div class="mt-4">
+                            <!-- Área para adicionar notas -->
+                            <label for="notaInput" class="mb-2 font-semibold text-s text-white"><strong>Adicionar Nota:</strong></label>
+                            <textarea id="notaInput" class="form-control form-control-lg w-full border rounded-lg shadow-md" rows="5"></textarea>
+                        </div>
+                        <div class="dropdown text-center mt-4">
+                            <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                                Abrir Documentos
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <li><a class="dropdown-item " id="pdfLink1" href="#">Abrir Documentos Pessoais</a></li>
+                                <li><a class="dropdown-item " id="pdfLink2" href="#">Abrir Extrato Bancário</a></li>
+                                <li><a class="dropdown-item " id="pdfLink3" href="#">Abrir Documentos Dependente</a></li>
+                                <li><a class="dropdown-item " id="pdfLink4" href="#">Abrir Documentos Cônjuge</a></li>
+                            </ul>
+                        </div>
+                        <div class="mt-4">
+                            <!-- Formulário de upload de documentos -->
+                            <label for="documentosInput" class="mb-2 font-semibold text-s text-white"><strong>Adicionar Documentos:</strong></label>
+                            <div class="mb-2 ">
+                                <label for="documentos_pessoais" >Documentação pessoal:</label>
+                                <input type="file" id="documentosInput" name="documentos_pessoais" class="form-control form-control-lg w-full border rounded-lg shadow-md" multiple>
+                            </div>
+                            <div class="mb-2">
+                                <label for="extrato_bancario" >Extrato:</label>
+                                <input type="file" id="extratoInput" name="extrato_bancario" class="form-control form-control-lg w-full border rounded-lg shadow-md" multiple>
+                            </div>
+                            <div class="mb-2">
+                                <label for="documentos_dependente" >Dependente:</label>
+                                <input type="file" id="dependenteInput" name="documentos_dependente" class="form-control form-control-lg w-full border rounded-lg shadow-md" multiple>
+                            </div>
+                            <div class="mb-2">
+                                <label for="documentos_conjuge" >Cônjuge:</label>
+                                <input type="file" id="conjugeInput" name="documentos_conjuge" class="form-control form-control-lg w-full border rounded-lg shadow-md" multiple>
+                            </div>
+                        </div>
+
+
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" onclick="fecharModal()" class="btn btn-outline-danger m-2" data-dismiss="modal">Fechar</button>
+                        <button onclick="salvarAlteracoes()" type="button" class="btn btn-outline-success m-2">Salvar alterações</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Adicione esta div no início do seu HTML -->
+        <!-- Overlay de espera -->
+        <div id="overlay">
+            <div class="loader"></div>
+            <h2>Aguarde...</h2>
+        </div>
+
+        <!-- Seu código HTML existente -->
+        {% for cliente in clientes %}
+        <!-- Modal para notas do cliente -->
+        <div class="modal fade" id="notaModal-{{ cliente.id }}" tabindex="-1" aria-labelledby="notaModalLabel-{{ cliente.id }}" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="notaModalLabel-{{ cliente.id }}">Notas para {{ cliente.nome }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <ul class="list-group">
+                            {% for nota in cliente.notas %}
+                            <li class="list-group-item">
+                                {{ nota.data_criacao|date:"d/m/Y H:i" }} - {{ nota.texto }} - {% if nota.criado_por %} {{ nota.criado_por.first_name }} {{ nota.criado_por.last_name }} {% else %} Usuário desconhecido {% endif %}
+                            </li>
+                            <a href="{% url 'concluir_processo' cliente_id=cliente.id %}" class="btn btn-success btn-sm btn-concluir-processo">Concluir</a>
+                            <button class="btn btn-danger btn-sm" onclick="deletarNota({{ nota.id }}, '{{ cliente.id }}')">Excluir</button>
+                            {% empty %}
+                            <li class="list-group-item">Nenhuma nota encontrada.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        <!-- Adicione este script no final do seu HTML -->
+        <script>
+            $(document).ready(function() {
+                $('.btn-concluir-processo').click(function() {
+                    $('#overlay').css('display', 'flex'); // Mostra o overlay quando o botão "Concluir" é clicado
+                });
+            });
+        </script>
+
+
+        <script>
+            var win = navigator.platform.indexOf('Win') > -1;
+                if (win && document.querySelector('#sidenav-scrollbar')) {
+                    var options = {
+                    damping: '0.5'
+                    }
+                    Scrollbar.init(document.querySelector('#sidenav-scrollbar'), options);
+                }
+        </script>
+        <script>
+            var clientesData = JSON.parse('{{ clientes_json|escapejs }}');
+
+function abrirModal(clienteId) {
+    var clienteIdNumerico = Number(clienteId);
+    const cliente = clientesData.find(c => Number(c.id) === clienteIdNumerico);
+    if (cliente) {
+        // Converter strings de data para objetos Date antes de tentar formatá-las
+        const dataAdmissao = cliente.data_admissao ? new Date(cliente.data_admissao).toLocaleDateString() : "N/A";
+        const dataNascimento = cliente.data_nascimento ? new Date(cliente.data_nascimento).toLocaleDateString() : "N/A";
+        // Preenchendo os detalhes do cliente no modal
+        document.getElementById('modalNome').textContent = cliente.nome || "N/A";
+        document.getElementById('modalEmail').textContent = cliente.email || "N/A";
+        document.getElementById('modalCPF').textContent = cliente.cpf || "N/A";
+        document.getElementById('modalTelefone').textContent = cliente.telefone || "N/A";
+        document.getElementById('modalEstadoCivil').textContent = cliente.estado_civil || "N/A";
+        document.getElementById('modalNaturalidade').textContent = cliente.naturalidade || "N/A";
+        document.getElementById('modalProfissao').textContent = cliente.profissao || "N/A";
+        document.getElementById('modalDataAdmissao').textContent = dataAdmissao;
+        document.getElementById('modalDataNascimento').textContent = dataNascimento;
+        document.getElementById('modalvalorrenda').textContent = cliente.valor_da_renda || "N/A";
+
+        document.getElementById('modalRendaTipo').textContent = cliente.renda_tipo || "N/A";
+        document.getElementById('modalStatusInput').value = cliente.status;
+        document.getElementById('modalPossuiCarteira').textContent = cliente.possui_carteira_mais_tres_anos ? "Sim" : "Não";
+        document.getElementById('modalNumeroPIS').textContent = cliente.numero_pis || "N/A";
+        document.getElementById('modalPossuiDependente').textContent = cliente.possui_dependente ? "Sim" : "Não";
+        
+         // Supondo que o nome do corretor esteja acessível em cliente.corretor.nome
+                        let nomeCorretor = 'N/A';
+
+                        // Verifique se 'cliente' e 'cliente.corretor' estão definidos
+                        if (cliente && cliente.corretor) {
+                            // Acesse o primeiro nome e o sobrenome do corretor a partir do objeto 'corretor'
+                            nomeCorretor = cliente.corretor.username;
+                        }
+                        currentClienteId = clienteId;
+                        
+        function openPdf(nomeCorretor, cpf, categoriaDocumento) {
+                    // Construir o caminho completo do arquivo
+                    let pdfPath = `/media/documentos/${nomeCorretor}/${cpf}/${categoriaDocumento}/${categoriaDocumento.toLowerCase()}_combined.pdf`;
+
+                    // Abrir o PDF em uma nova aba
+                    window.open(pdfPath, '_blank');
+                }
+        // Atualizar os links dos documentos para abrir o PDF com base no nome do corretor e CPF do cliente
+        document.getElementById('pdfLink1').setAttribute('href', `/media/documentos/${nomeCorretor}/${cliente.cpf}/documentos_pessoais/documentos_pessoais_combined.pdf`);
+        document.getElementById('pdfLink2').setAttribute('href', `/media/documentos/${nomeCorretor}/${cliente.cpf}/extrato_bancario/extrato_bancario_combined.pdf`);
+        document.getElementById('pdfLink3').setAttribute('href', `/media/documentos/${nomeCorretor}/${cliente.cpf}/documentos_dependente/documentos_dependente_combined.pdf`);
+        document.getElementById('pdfLink4').setAttribute('href', `/media/documentos/${nomeCorretor}/${cliente.cpf}/documentos_conjuge/documentos_conjuge_combined.pdf`);
+
+        // Mostrar o modal
+        $('#clienteModal').modal('show');
+    } else {
+        console.error('Cliente não encontrado');
+    }
+}
+
+function fecharModal() {
+    $('#clienteModal').modal('hide');
+}
+
+                
+                                
+                
+                
+                
+                
+                function fecharModal() {
+                    $('#clienteModal').modal('hide')
+                    
+                }
+                
+                function salvarAlteracoes() {
+                    let novoStatus = document.getElementById('modalStatusInput').value;
+                    let nota = document.getElementById("notaInput").value;
+                
+                    // Obter os arquivos de cada input de arquivo
+                    let documentos = document.getElementById("documentosInput").files;
+                    let extrato = document.getElementById("extratoInput").files;
+                    let dependente = document.getElementById("dependenteInput").files;
+                    let conjuge = document.getElementById("conjugeInput").files;
+                
+                    // Criar um objeto FormData para enviar os arquivos
+                    let formData = new FormData();
+                
+                    formData.append('novo_status', novoStatus);
+                    formData.append('nota', nota);
+                
+                    // Verifica se há alguma nota digitada
+                    if (nota.trim()) {
+                        concluirprocesso(); // Chama a função para enviar notificação
+                    }
+                
+                    // Adicione os arquivos ao FormData se não estiverem vazios
+                    for (let i = 0; i < documentos.length; i++) {
+                        formData.append('documentos_pessoais', documentos[i]);
+                    }
+                    for (let i = 0; i < extrato.length; i++) {
+                        formData.append('extrato_bancario', extrato[i]);
+                    }
+                    for (let i = 0; i < dependente.length; i++) {
+                        formData.append('documentos_dependente', dependente[i]);
+                    }
+                    for (let i = 0; i < conjuge.length; i++) {
+                        formData.append('documentos_conjuge', conjuge[i]);
+                    }
+                
+                    console.log("Enviando dados para o cliente com ID:", currentClienteId); // Adicionando um console.log para depuração
+                
+                    // Chama a função para enviar os dados
+                    enviarDadosCliente(currentClienteId, formData)
+                        .then(() => {
+                            window.location.reload();
+                        })
+                        .catch(error => {
+                            console.error('Erro:', error);
+                            alert(`Erro: ${error.message}`);
+                        });
+                }
+                
+
+                function enviarDadosCliente(client_id, formData) {
+                    return fetch(`/atualizar-cliente/${client_id}/`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erro ao salvar as alterações.');
+                        }
+                        if (response.ok) {
+                           sendNotification();
+                        }
+                        return response.json();
+                    });
+                }
+    
+                function atualizarStatusCliente(novoStatus) {
+                    return fetch('/atualizar-status-cliente/', {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            'cliente_id': currentClienteId,
+                            'novo_status': novoStatus
+                        }),
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erro ao atualizar o status.');
+                        }
+                        return response.json();
+                    });
+                }
+    
+                function adicionarNota(nota, clienteId) {
+                    if (!nota.trim()) {
+                        return Promise.reject(new Error("Nota vazia não pode ser enviada."));
+                    }
+
+                    return fetch('/adicionar-nota-cliente/', {
+                        method: 'POST',
+                        body: new URLSearchParams({
+                            'cliente_id': clienteId,
+                            'texto': nota
+                        }),
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        }
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Erro ao enviar a nota.');
+                        }
+                        // Chamar a função JavaScript para enviar a notificação ao corretor
+                        send_notification_to_corretor_mensagem_personalizada(corretor, mensagem);
+                        return response.json();
+                    });
+                }
+    
+                function deletarNota(notaId) {
+                    if (confirm('Tem certeza que deseja deletar esta nota?')) {
+                        fetch(`/deletar-nota-cliente/${notaId}/`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            }
+                        })
+                        .then(response => {
+                            if (response.ok) {
+                                alert('Nota deletada com sucesso.');
+                                window.location.reload();
+                            } else {
+                                alert('Erro ao deletar a nota.');
+                            }
+                        });
+                    }
+                }
+    
+                // Função para enviar notificação
+                function sendNotification() {
+                 return fetch('/send-notification/', {
+                    method: 'POST',
+                     headers: {
+                         'Content-Type': 'application/json',
+                         'X-CSRFToken': '{{ csrf_token }}'
+                     },
+                     body: JSON.stringify({ 'cliente_id': currentClienteId })
+                 })
+                 .then(response => {
+                     if (response && response.ok) {
+                        return response.json();
+                     } else {
+                        return response.text().then(text => {
+                            throw new Error(`Erro na requisição: ${response.status} ${response.statusText}\n${text}`);
+                         });
+                     }
+                 });
+             }
+            
+            function concluirprocesso() {
+                return fetch('/concluir_processo/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ 'cliente_id': currentClienteId })
+                })
+                .then(response => {
+                    if (response && response.ok) {
+                        return response.json();
+                    } else {
+                        return response.text().then(text => {
+                            throw new Error(`Erro na requisição: ${response.status} ${response.statusText}\n${text}`);
+                        });
+                    }
+                });
+            }
+        </script>
+
+        <!-- Pesquisa -->
+        <script>
+            document.getElementById('searchInput').addEventListener('keyup', function() {
+                var searchValue = this.value.toLowerCase();
+            
+                // Pesquisa na Tabela
+                var tableRows = document.querySelectorAll('#clienteTable tbody tr');
+                tableRows.forEach(function(row) {
+                    var nomeCliente = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+                    row.style.display = nomeCliente.includes(searchValue) ? '' : 'none';
+                });
+            
+                // Pesquisa no Kanban
+               
+            });
+        </script>
+</body>
+
+</html>
+{% endblock %}

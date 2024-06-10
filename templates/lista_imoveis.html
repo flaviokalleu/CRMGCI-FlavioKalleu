@@ -1,0 +1,65 @@
+﻿{% extends 'base.html' %}
+{% load custom_tags %}
+{% block title %}Lista de Imóveis{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+{% endblock %}
+
+{% block main_content %}
+<div class="container py-4">
+    <h2 class="text-center text-3xl font-semibold mb-4">Lista de Imóveis</h2>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-4">
+        {% for imovel in imoveis %}
+        <div class="col">
+            <div class="card h-100">
+                {% if imovel.imagens.exists %}
+                {% with primeira_imagem=imovel.imagens.first %}
+                <img src="{{ primeira_imagem.imagem.url }}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="Imagem do Imóvel">
+                {% endwith %}
+                {% else %}
+                <div class="card-img-top bg-gray-300 d-flex justify-content-center align-items-center" style="height: 200px;">
+                    <p class="text-gray-500">Sem imagem disponível</p>
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ imovel.nome_do_imovel }}</h5>
+                    <p class="card-text">{{ imovel.endereco }}</p>
+                    <p class="card-text"><strong>Tipo:</strong> {{ imovel.tipo }}</p>
+                    <p class="card-text"><strong>Valor de Avaliação:</strong> R$ {{ imovel.valor_de_avaliacao }}</p>
+                    <p class="card-text"><strong>Valor de Venda:</strong> R$ {{ imovel.valor_de_venda }}</p>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    {% if request.user|is_admin or request.user|is_correspondente %}
+                    <a href="{% url 'editar_imovel' imovel.id %}" class="btn btn-success">Editar</a>
+                    {% endif %}
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton{{ imovel.id }}" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Opções
+                        </button>
+                        <div class="dropdown-menu text-white" aria-labelledby="dropdownMenuButton{{ imovel.id }}">
+                            <form method="get" action="{% url 'download_imagens' imovel.id %}">
+                                <button class="dropdown-item text-white" type="submit">Baixar Imagens</button>
+                            </form>
+                            {% if request.user|is_admin or request.user|is_correspondente %}
+                            <form method="post" action="{% url 'excluir_imovel' imovel.id %}">
+                                {% csrf_token %}
+                                <button class="dropdown-item text-white" type="submit">Excluir</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.min.js"></script>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+{% block title %}Editar Imóvel{% endblock %}
+
+{% block main_content %}
+<div class="container">
+    <h2 class="mt-5 mb-4">Editar Imóvel</h2>
+    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="mb-3">
+            <label for="id_nome_do_imovel" class="form-label">Nome do Imóvel:</label>
+            <input type="text" name="nome_do_imovel" value="{{ form.nome_do_imovel.value }}" maxlength="255" id="id_nome_do_imovel" class="form-control" required>
+            <div class="invalid-feedback">Por favor, preencha este campo.</div>
+        </div>
+        
+        <div class="mb-3">
+            <label for="id_endereco" class="form-label">Endereço:</label>
+            <input type="text" name="endereco" value="{{ form.endereco.value }}" maxlength="255" id="id_endereco" class="form-control" required>
+            <div class="invalid-feedback">Por favor, preencha este campo.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_tipo" class="form-label">Tipo:</label>
+            <input type="text" name="tipo" value="{{ form.tipo.value }}" maxlength="50" id="id_tipo" class="form-control" required>
+            <div class="invalid-feedback">Por favor, preencha este campo.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_valor_de_avaliacao" class="form-label">Valor de avaliação:</label>
+            <input type="text" name="valor_de_avaliacao" value="{{ form.valor_de_avaliacao.value }}" maxlength="20" id="id_valor_de_avaliacao" class="form-control" required>
+            <div class="invalid-feedback">Por favor, preencha este campo.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_valor_de_venda" class="form-label">Valor de venda:</label>
+            <input type="text" name="valor_de_venda" value="{{ form.valor_de_venda.value }}" maxlength="20" id="id_valor_de_venda" class="form-control" required>
+            <div class="invalid-feedback">Por favor, preencha este campo.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_documentacao" class="form-label">Documentação:</label>
+            <input type="file" name="documentacao" id="id_documentacao" class="form-control" required>
+            <div class="invalid-feedback">Por favor, selecione um arquivo.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_imagem_de_capa" class="form-label">Imagem de Capa:</label>
+            <a href="{{ form.imagem_de_capa.url }}">{{ form.imagem_de_capa.value }}</a>
+            <input type="checkbox" name="imagem_de_capa-clear" id="imagem_de_capa-clear_id">
+            <label for="imagem_de_capa-clear_id">Limpar</label><br>
+            Modificar:
+            <input type="file" name="imagem_de_capa" accept="image/*" id="id_imagem_de_capa" class="form-control">
+            <div class="invalid-feedback">Por favor, selecione um arquivo.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_imagens" class="form-label">Imagens:</label>
+            <select name="imagens" id="id_imagens" multiple class="form-control">
+                {% if form.imagens %}
+                    {% for image in form.imagens %}
+                        <option value="{{ image.pk }}" {% if image in form.imagens.value %}selected{% endif %}>{{ image }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled selected>Nenhuma imagem disponível</option>
+                {% endif %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_localizacao" class="form-label">Localização:</label>
+            <select name="localizacao" id="id_localizacao" class="form-control" required>
+                {% for key, value in form.localizacao.field.choices %}
+                    <option value="{{ key }}" {% if key == form.localizacao.value %}selected{% endif %}>{{ value }}</option>
+                {% endfor %}
+            </select>
+            <div class="invalid-feedback">Por favor, selecione uma localização.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_exclusivo" class="form-label">Exclusivo:</label>
+            <select name="exclusivo" id="id_exclusivo" class="form-control" required>
+                <option value="True" {% if form.exclusivo.value == True %}selected{% endif %}>Sim</option>
+                <option value="False" {% if form.exclusivo.value == False %}selected{% endif %}>Não</option>
+            </select>
+            <div class="invalid-feedback">Por favor, selecione uma opção.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_tem_inquilino" class="form-label">Tem inquilino:</label>
+            <select name="tem_inquilino" id="id_tem_inquilino" class="form-control" required>
+                <option value="True" {% if form.tem_inquilino.value == True %}selected{% endif %}>Sim</option>
+                <option value="False" {% if form.tem_inquilino.value == False %}selected{% endif %}>Não</option>
+            </select>
+            <div class="invalid-feedback">Por favor, selecione uma opção.</div>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_situacao_do_imovel" class="form-label">Situação do Imóvel:</label>
+            <textarea name="situacao_do_imovel" id="id_situacao_do_imovel" class="form-control" rows="5">{{ form.situacao_do_imovel.value }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_observacoes" class="form-label">Observações:</label>
+            <textarea name="observacoes" id="id_observacoes" class="form-control" rows="5">{{ form.observacoes.value }}</textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_tags" class="form-label">Tags:</label>
+            <select name="tags" id="id_tags" class="form-control" multiple>
+                {% for tag in tags %}
+                    <option value="{{ tag.id }}" {% if tag in form.tags.all %}selected{% endif %}>{{ tag.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label for="id_descricao" class="form-label">Descrição do Imóvel:</label>
+            <textarea name="descricao" id="id_descricao" class="form-control" rows="5">{{ form.descricao.value }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+    </form>
+</div>
+{% endblock %}

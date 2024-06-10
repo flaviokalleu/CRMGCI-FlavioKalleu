@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block main_content %}
+<!-- jQuery (coloque isso antes do fechamento do cabeçalho </head>) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+<!-- Bootstrap JavaScript (coloque isso antes do fechamento do corpo </body>) -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+
+<div class="container-fluid pt-4 px-4">
+<div class="col-12">
+  <div class="bg-secondary rounded h-100 p-4">
+      <h6 class="mb-4">Lista de Corretores</h6>
+      <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>                        
+                <th scope="col" class="text-center" style="color: white;">Nome</th>
+                <th scope="col" class="text-center" style="color: white;">Email</th>
+                <th scope="col" class="text-center" style="color: white;">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for corretor in corretores %}
+              <tr>
+                <td class="text-center" style="color: white;">{{ corretor.first_name }} {{ corretor.last_name }}</td>
+                <td class="text-center" style="color: white;">{{ corretor.email }}</td>
+                <td class="text-center">
+                  <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                      Ações
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                      <a class="dropdown-item" href="{% url 'editar_corretor' corretor.id %}">Editar</a>
+                      <div class="dropdown-divider"></div>
+                      <form method="post" action="{% url 'deletar_corretor' corretor.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="corretor_id" value="{{ corretor.id }}">
+                        <button type="submit" class="dropdown-item">Deletar</button>
+                      </form>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+      </div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block main_content %}
+<div class="container py-5">
+    <h1 class="text-center mb-4">Transações Financeiras</h1>
+
+    <div class="row">
+        <!-- Botões de alternância -->
+        <div class="col-lg-12 mb-4">
+            <div class="btn-group" role="group">
+                <button type="button" class="btn btn-primary active" id="btnLista">Lista</button>
+                <button type="button" class="btn btn-primary" id="btnGrafico">Gráfico</button>
+            </div>
+        </div>
+
+        <!-- Visualização em Lista -->
+        <div class="col-lg-12" id="listaView">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTransactionModal">Adicionar</button>
+                    <h5 class="card-title">Lista de Transações</h5>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transacao in transacoes %}
+                                <tr>
+                                    <td>{{ transacao.description }}</td>
+                                    <td>{{ transacao.tipo }}</td>
+                                    <td>R$ {{ transacao.valor }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-info">Detalhes</button>
+                                            <button type="button" class="btn btn-warning">Editar</button>
+                                            <button type="button" class="btn btn-danger">Deletar</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4">Nenhuma transação encontrada.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visualização em Gráfico -->
+        <div class="col-lg-12" id="graficoView" style="display: none;">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <canvas id="myChart" style="max-height: 400px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script para alternar entre Lista e Gráfico -->
+<script>
+    document.getElementById('btnLista').addEventListener('click', function() {
+        document.getElementById('listaView').style.display = 'block';
+        document.getElementById('graficoView').style.display = 'none';
+        document.getElementById('btnLista').classList.add('active');
+        document.getElementById('btnGrafico').classList.remove('active');
+    });
+
+    document.getElementById('btnGrafico').addEventListener('click', function() {
+        document.getElementById('listaView').style.display = 'none';
+        document.getElementById('graficoView').style.display = 'block';
+        document.getElementById('btnLista').classList.remove('active');
+        document.getElementById('btnGrafico').classList.add('active');
+    });
+
+    // Script para renderizar o gráfico
+    var ctx = document.getElementById('myChart').getContext('2d');
+    var totais_mensais_json = {{ totais_mensais_json|safe }};
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: totais_mensais_json.meses,
+            datasets: [{
+                label: 'Receitas',
+                data: totais_mensais_json.receitas,
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            },
+            {
+                label: 'Despesas',
+                data: totais_mensais_json.despesas,
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
+</script>
+{% endblock %}

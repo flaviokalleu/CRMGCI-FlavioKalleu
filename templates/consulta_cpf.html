@@ -1,0 +1,30 @@
+﻿{% extends 'base.html' %}
+
+{% block main_content %}
+  <div class="container">
+    <div id="interditado" class="mt-5 text-center" role="alert" style="display: none;">
+      <img src="https://static-00.iconduck.com/assets.00/404-page-not-found-illustration-2048x1462-azn7c8sp.png" alt="Interditado" class="img-fluid mb-4" style="max-width: 400px; margin: 0 auto; background: none;">
+      <h2 class="text-3xl font-bold mb-4">Interditado!</h2>
+      <p class="lead">Esta página está temporariamente indisponível.</p>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const interditado = document.getElementById('interditado');
+      fadeIn(interditado);
+    });
+
+    function fadeIn(element) {
+      let opacity = 0;
+      element.style.display = 'block';
+      const timer = setInterval(function() {
+        if (opacity >= 1) {
+          clearInterval(timer);
+        }
+        element.style.opacity = opacity;
+        opacity += 0.1;
+      }, 100);
+    }
+  </script>
+{% endblock %}

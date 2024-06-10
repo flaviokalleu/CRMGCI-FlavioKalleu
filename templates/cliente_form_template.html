@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% block main_content %}
+{% load static %}
+<div class="container py-4">
+    <div class="card shadow-lg rounded-lg">
+        <div class="card-body p-3">
+            <h2 class="text-xl font-bold text-center mb-4 text-white p-3 rounded">Criar Cliente</h2>
+            <p class="text-center text-gray-500 mb-4">Insira as informações do cliente abaixo.</p>
+            <div id="error-container" class="text-center">
+                {% if messages %}
+                    {% for message in messages %}
+                        <p class="{% if message.tags %} {{ message.tags }} {% endif %}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <form id="client-form" method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}" class="text-sm font-medium text-white">
+                            {% if field.label == "possui_carteira_mais_tres_anos" %}
+                                Possui Carteira por mais de três anos
+                            {% elif field.label == "possui_dependente" %}
+                                Possui Dependente
+                            {% elif field.label == "valor_da_renda" %}
+                                Valor de Renda
+                            {% else %}
+                                {{ field.label }}
+                            {% endif %}
+                        </label>
+                        {% if field.name == 'documentos_pessoais' or field.name == 'extrato_bancario' or field.name == 'documentos_dependente' or field.name == 'documentos_conjuge' %}
+                            <input type="file" name="{{ field.name }}_file" multiple class="form-control text-black">
+                            {% if form.instance.pk %}
+                                {% if field.value %}
+                                    <p class="text-black">Arquivos já enviados: {% for file in field.value.all %}{{ file.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+                                {% else %}
+                                    <p class="text-black">Nenhum arquivo enviado.</p>
+                                {% endif %}
+                            {% endif %}
+                        {% elif field.name == 'data_admissao' or field.name == 'data_nascimento' %}
+                            <input id="{{ field.id_for_label }}" type="date" name="{{ field.name }}" autocomplete="off" class="form-control">
+                        {% elif field.name == 'estado_civil' %}
+                            <select id="{{ field.id_for_label }}" name="{{ field.name }}" class="form-control">
+                                {% for choice in field.field.choices %}
+                                    <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.name == 'renda_tipo' %}
+                            <select id="{{ field.id_for_label }}" name="{{ field.name }}" class="form-control">
+                                {% for choice in field.field.choices %}
+                                    <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                        {% elif field.name == 'possui_carteira_mais_tres_anos' or field.name == 'possui_dependente' %}
+                            <select id="{{ field.id_for_label }}" name="{{ field.name }}" class="form-control">
+                                <option value="">Selecione...</option>
+                                <option value="true">Sim</option>
+                                <option value="false">Não</option>
+                            </select>
+                        {% else %}
+                            <input id="{{ field.id_for_label }}" type="text" name="{{ field.name }}" autocomplete="off" class="form-control">
+                        {% endif %}
+                        {% if field.errors %}
+                            <p class="error-message">{{ field.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" id="submit-btn" class="btn btn-primary">Salvar</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="overlay" id="overlay">
+    <div class="spinner-container">
+        <div class="spinner"></div>
+        <p class="loading-text">Enviando Informações Aguarde...</p>
+    </div>
+</div>
+<Style>
+   .form-control:disabled, .form-control:read-only {
+    background-color: #000000;
+    opacity: 1;
+}
+    .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    word-wrap: break-word;
+    background-color: #191c24;
+    background-clip: border-box;
+    border: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 5px;
+}
+.overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.spinner {
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid #ffffff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    color: #ffffff;
+    font-size: 18px;
+    margin-top: 10px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+
+
+</style>
+
+<!-- JavaScript scripts -->
+
+<script>
+    $(document).ready(function() {
+        $('#id_valor_da_renda').on('input', function() {
+            var valor = $(this).val(); // Obtém o valor do campo
+
+            // Remove todos os caracteres não numéricos, exceto a vírgula decimal
+            valor = valor.replace(/[^\d,]/g, '');
+
+            // Verifica se o valor contém uma vírgula decimal
+            var temVirgula = valor.indexOf(',') !== -1;
+
+            // Se o valor contém uma vírgula decimal
+            if (temVirgula) {
+                // Separa a parte inteira da parte decimal
+                var partes = valor.split(',');
+
+                // Formata a parte inteira com pontos
+                partes[0] = partes[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+                // Reconstitui o valor com a parte inteira e a parte decimal
+                valor = partes.join(',');
+            } else {
+                // Se não houver vírgula decimal, formata apenas a parte inteira
+                valor = valor.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            }
+
+            // Define o valor formatado no campo
+            $(this).val(valor);
+        });
+    });
+
+
+
+    $(document).ready(function() {
+        $('#id_cpf').on('input', function() {
+            var cpf = $(this).val().replace(/\D/g, '');
+            if (cpf.length === 11) {
+                cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+                $(this).val(cpf);
+            }
+        });
+
+        document.getElementById('id_possui_carteira_tres_anos').addEventListener('change', function() {
+            var numeroPisInput = document.getElementById('id_numero_pis');
+            if (this.value === 'true') {
+                numeroPisInput.style.display = 'block';
+            } else {
+                numeroPisInput.style.display = 'none';
+            }
+        });
+        
+
+        // Format date fields onBlur
+        var dateFields = document.querySelectorAll('input[type="date"]');
+        dateFields.forEach(function(field) {
+            field.addEventListener('blur', function() {
+                var date = new Date(field.value);
+                var formattedDate = formatDate(date);
+                field.value = formattedDate;
+            });
+        });
+
+        // Function to format date as DD/MM/YYYY
+        function formatDate(date) {
+            var day = date.getDate().toString().padStart(2, '0');
+            var month = (date.getMonth() + 1).toString().padStart(2, '0');
+            var year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+    });
+
+    
+
+    $(document).ready(function() {
+    $('#id_telefone').on('input', function () {
+        var telefone = $(this).val().replace(/\D/g, ''); // Remover todos os não dígitos
+        if (telefone.length > 15) {
+            // Limitar o número de caracteres do telefone para 15
+            telefone = telefone.substring(0, 15);
+        }
+        if (telefone.length > 0) {
+            // Formatar o número de telefone
+            var formattedTelefone;
+            if (telefone.length <= 10) {
+                // Se o telefone tiver 10 dígitos (sem o DDD)
+                formattedTelefone = '(' + telefone.substring(0, 2) + ') ' + telefone.substring(2, 6) + '-' + telefone.substring(6, 10);
+            } else {
+                // Se o telefone tiver 11 dígitos (com DDD)
+                formattedTelefone = '(' + telefone.substring(0, 2) + ') ' + telefone.substring(2, 7) + '-' + telefone.substring(7, 11);
+            }
+            $(this).val(formattedTelefone);
+        }
+    });
+});
+
+
+        // Converter todas as letras para maiúsculas
+        $('input[type="text"]').on('input', function() {
+            $(this).val(function(_, val) {
+                return val.toUpperCase();
+            });
+        });
+    
+
+    document.addEventListener('DOMContentLoaded', function() {
+        var corretorSelect = document.getElementById('corretor-select');
+        var form = document.querySelector('form');
+        var errorContainer = document.getElementById('error-container');
+
+        corretorSelect.addEventListener('change', function() {
+            var selectedCorretorId = corretorSelect.value;
+            console.log('ID do Corretor Selecionado:', selectedCorretorId);
+            // You can use selectedCorretorId as needed
+        });
+
+        form.addEventListener('submit', function(event) {
+            var isValid = true;
+
+            // Clear previous error messages and field highlights
+            errorContainer.innerHTML = '';
+            form.querySelectorAll('.error-field').forEach(function(field) {
+                field.classList.remove('error-field');
+            });
+
+            // Check for form field errors
+            var errorMessages = document.querySelectorAll('.error-message');
+            errorMessages.forEach(function(errorMessage, index) {
+                if (errorMessage.textContent.trim() !== '') {
+                    isValid = false;
+
+                    // Display specific error message at the top of the form
+                    var fieldName = form[index].name;
+                    errorContainer.innerHTML += `<p class="error-message" style="color: red;">Erro no campo ${fieldName}: ${errorMessage.textContent}</p>`;
+
+                    // Highlight the specific form field with the error
+                    var errorField = form[index];
+                    errorField.classList.add('error-field');
+                }
+            });
+
+            if (!isValid) {
+                event.preventDefault(); // Prevent form submission if there are errors
+            }
+        });
+
+        // Add an event listener to clear the global error messages and field highlights when the user interacts with the form
+        form.addEventListener('input', function() {
+            errorContainer.innerHTML = '';
+            form.querySelectorAll('.error-field').forEach(function(field) {
+                field.classList.remove('error-field');
+            });
+        });
+    });
+
+    
+   $(document).ready(function() {
+       $('#id_cpf').on('input', function() {
+           var cpf = $(this).val().replace(/\D/g, '');
+           if (cpf.length === 11) {
+               cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+               $(this).val(cpf);
+           }
+       });
+   });
+   
+   $(document).ready(function() {
+    var form = document.getElementById('client-form');
+    var overlay = document.getElementById('overlay');
+    var submitBtn = document.getElementById('submit-btn');
+
+    submitBtn.addEventListener('click', function() {
+        // Show overlay and spinner
+        overlay.style.display = 'flex';
+
+        // Submit the form
+        submitForm();
+    });
+
+    function submitForm() {
+        // Perform form submission via AJAX
+        $.ajax({
+            url: form.action,
+            method: form.method,
+            data: new FormData(form),
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                // Reload the page after successful form submission
+                location.reload();
+            },
+            error: function(xhr, status, error) {
+                console.error(xhr.responseText);
+            },
+            complete: function() {
+                overlay.style.display = 'none'; // Hide overlay and spinner on completion
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

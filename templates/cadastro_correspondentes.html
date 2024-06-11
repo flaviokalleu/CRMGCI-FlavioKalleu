@@ -6,7 +6,7 @@
     display: flex;
     flex-direction: column;
     min-width: 0;
-    color:white;
+    color: white;
     word-wrap: break-word;
     background-color: #191c24;
     background-clip: border-box;
@@ -21,7 +21,7 @@
             <p class="text-center mb-4">
                 Por favor, preencha o formulário abaixo. Obs: não adicione o "9" no número de telefone.
             </p>
-            <form method="post" class="space-y-4">
+            <form method="post" enctype="multipart/form-data" class="space-y-4">  <!-- Note a inclusão de enctype -->
                 {% csrf_token %}
                 {% for field in form %}
                 <div class="form-group">
@@ -32,6 +32,8 @@
                             Primeiro Nome
                         {% elif field.label == "Last name" %}
                             Sobrenome
+                        {% elif field.label == "photo" %}
+                            Foto
                         {% else %}
                             {{ field.label }}
                         {% endif %}
@@ -43,6 +45,8 @@
                     </div>
                     {% elif field.name == "password" %}
                     <input id="{{ field.id_for_label }}" type="password" name="{{ field.name }}" autocomplete="off" class="form-control">
+                    {% elif field.name == "photo" %}
+                    <input class="form-control bg-dark" type="file" id="{{ field.id_for_label }}" name="{{ field.name }}" accept="image/*">
                     {% else %}
                     <input id="{{ field.id_for_label }}" type="text" name="{{ field.name }}" autocomplete="off" class="form-control">
                     {% endif %}
@@ -58,5 +62,4 @@
         </div>
     </div>
 </div>
-
 {% endblock %}

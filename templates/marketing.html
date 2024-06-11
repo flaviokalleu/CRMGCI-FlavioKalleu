@@ -1,6 +1,14 @@
 {% extends 'base.html' %}
 {% block title %}Marketing{% endblock %}
 {% load custom_tags %}
+{% block extra_css %}
+<style>
+    .card-img-top {
+        height: 200px; /* Defina a altura desejada */
+        object-fit: cover; /* Para garantir que a imagem seja ajustada para preencher a área */
+    }
+</style>
+{% endblock %}
 {% block main_content %}
 <div class="container py-4">
     <h2 class="text-center text-3xl font-semibold mb-4">Materiais de Marketing</h2>

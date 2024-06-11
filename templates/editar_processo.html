@@ -1,25 +1,96 @@
 {% extends "base.html" %}
-{% load widget_tweaks %}
 {% block main_content %}
-<div class="max-w-md mx-auto mt-10">
-    <h2 class="text-2xl font-semibold mb-5 text-center">Editar Processo</h2>
-    <form method="post" action="" class="space-y-4">
+<style>
+    /* Estilos para o formulário */
+.custom-form {
+   
+    margin: 0 auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+textarea {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+select {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    appearance: none;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #fff;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+}
+
+/* Estilo para mensagens de erro */
+.error {
+    color: red;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+/* Estilo para texto de ajuda */
+.form-text {
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+</style>
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Editar Processo</h2>
+    <form method="post" action="" class="custom-form">
         {% csrf_token %}
         {% for field in form %}
         <div class="form-group">
-            <label for="{{ field.id_for_label }}" class="block text-white text-sm font-bold mb-2">
-                {{ field.label }}
-            </label>
-            {{ field|add_class:"shadow appearance-none border rounded w-full py-2 px-3 text-black leading-tight focus:outline-none focus:shadow-outline" }}
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+                <span class="error">{{ field.errors.as_text }}</span>
+            {% endif %}
             {% if field.help_text %}
-            <p class="text-gray-600 text-xs italic">{{ field.help_text }}</p>
+                <small class="form-text text-muted">{{ field.help_text }}</small>
             {% endif %}
         </div>
         {% endfor %}
-        <div class="flex justify-center space-x-4 mt-4">
-            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Salvar alterações</button>
-            <a href="{% url 'lista_processos' %}" class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">Cancelar</a>
-
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+            <a href="{% url 'lista_processos' %}" class="btn btn-secondary">Cancelar</a>
         </div>
     </form>
 </div>

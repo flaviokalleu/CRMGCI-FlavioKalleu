@@ -55,9 +55,11 @@
         <!-- Sidebar Start -->
         <div class="sidebar pe-4 pb-3">
           <nav class="navbar bg-secondary navbar-dark">
-              <a href="index.html" class="navbar-brand mx-4 mb-3">
-                  <h3 class="text-primary"><i class="fas fa-user-edit me-2"></i>CRM GCI - Flavio kalleu</h3>
-              </a>
+            <a href="{% url 'dashboard_redirect' %}" class="navbar-brand mx-4 mb-3">
+                <img src="{% static 'assets/img/logo.png' %}" alt="Logo" class="img-fluid" style="max-width: 150px;">
+                
+            </a>
+            
               <div class="d-flex align-items-center ms-4 mb-4">
                   <div class="position-relative">
                     {% if user.photo %}
@@ -116,15 +118,13 @@
         <div class="content">
             <!-- Navbar Start -->
             <nav class="navbar navbar-expand bg-secondary navbar-dark sticky-top px-4 py-0">
-                <a href="index.html" class="navbar-brand d-flex d-lg-none me-4">
+                <a href="{% url 'dashboard_redirect' %}" class="navbar-brand d-flex d-lg-none me-4">
                     <h2 class="text-primary mb-0"><i class="fa fa-user-edit"></i></h2>
                 </a>
                 <a href="#" class="sidebar-toggler flex-shrink-0">
                     <i class="fa fa-bars"></i>
                 </a>
-                <form class="d-none d-md-flex ms-4">
-                    <input class="form-control bg-dark border-0" type="search" placeholder="Search">
-                </form>
+                
                 <div class="navbar-nav align-items-center ms-auto">
                    
                     <div class="nav-item dropdown">
@@ -195,28 +195,51 @@
             <!-- Sales Chart Start -->
             <div class="container-fluid pt-4 px-4">
                 <div class="row g-4">
-                    <div class="col-sm-12 col-xl-6">
+                    
                         <div class="bg-secondary text-center rounded p-4">
                             <div class="d-flex align-items-center justify-content-between mb-4">
-                                <h6 class="mb-0">Worldwide Sales</h6>
-                                <a href="">Show All</a>
+                                <h6 class="mb-0">Clientes Mensais</h6>                          
                             </div>
-                            <canvas id="worldwide-sales"></canvas>
+                            <canvas id="clientes-mes-chart"></canvas>
                         </div>
-                    </div>
-                    <div class="col-sm-12 col-xl-6">
-                        <div class="bg-secondary text-center rounded p-4">
-                            <div class="d-flex align-items-center justify-content-between mb-4">
-                                <h6 class="mb-0">Salse & Revenue</h6>
-                                <a href="">Show All</a>
-                            </div>
-                            <canvas id="salse-revenue"></canvas>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
             <!-- Sales Chart End -->
+ <!-- Inclua o script do Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+         document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('clientes-mes-chart').getContext('2d');
+            const chartData = JSON.parse('{{ chart_data_json|escapejs }}');
 
+            const data = {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Clientes por Mês',
+                    data: chartData.data,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            };
+
+            const config = {
+                type: 'bar',
+                data: data,
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            };
+
+            const clientesMesChart = new Chart(ctx, config);
+        });
+        
+    </script>
 
             <!-- Recent Sales Start -->
             <div class="container-fluid pt-4 px-4">

@@ -538,7 +538,24 @@ def lista_de_clientes(request):
         except ValueError:
             pass
 
-    todos_clientes = todos_clientes.order_by('-id')
+    # Filtrando clientes com status 'aguardando_aprovacao' e 'aguardando_cancelamento_qv'
+    clientes_aguardando = todos_clientes.filter(Q(status='aguardando_aprovacao') | Q(status='aguardando_cancelamento_qv'))
+
+    # Filtrando outros clientes
+    clientes_outros = todos_clientes.exclude(Q(status='aguardando_aprovacao') | Q(status='aguardando_cancelamento_qv'))
+
+    # Concatenando as listas para garantir que os clientes com status 'aguardando_aprovacao' e 'aguardando_cancelamento_qv' apareçam primeiro
+    todos_clientes = list(clientes_aguardando) + list(clientes_outros)
+
+    # Convertendo todos_clientes de volta para uma queryset para poder filtrar novamente
+    todos_clientes = Cliente.objects.filter(id__in=[cliente.id for cliente in todos_clientes])
+
+    # Filtrando por mês e contando os clientes
+    meses = []
+    for i in range(1, 13):
+        nome_mes = _(calendar.month_name[i])
+        qtd_clientes = todos_clientes.filter(data_de_criacao__month=i).count()
+        meses.append({'nome_mes': nome_mes, 'qtd_clientes': qtd_clientes})
 
     # Obtenção das notas dos clientes
     for cliente in todos_clientes:
@@ -550,12 +567,6 @@ def lista_de_clientes(request):
     clientes_serializados = ClienteSerializer(todos_clientes, many=True).data
     for cliente, cliente_serializado in zip(todos_clientes, clientes_serializados):
         cliente_serializado['valor_da_renda'] = cliente.valor_da_renda
-
-    meses = []
-    for i in range(1, 13):
-        nome_mes = _(calendar.month_name[i])
-        qtd_clientes = todos_clientes.filter(data_de_criacao__month=i).count()
-        meses.append({'nome_mes': nome_mes, 'qtd_clientes': qtd_clientes})
 
     todos_corretores = Corretores.objects.all()
    
@@ -920,7 +931,7 @@ def atualizar_cliente(request, client_id):
 @login_required
 def cadastro_correspondentes(request):
     if request.method == 'POST':
-        form = CorrespondenteForm(request.POST)
+        form = CorrespondenteForm(request.POST, request.FILES)  # Note a inclusão de request.FILES
         if form.is_valid():
             correspondente = form.save(commit=False)  # Não salve ainda
 
@@ -934,6 +945,9 @@ def cadastro_correspondentes(request):
 
             # Tente obter o grupo "correspondente" ou crie se não existir
             group, _ = Group.objects.get_or_create(name='correspondente')
+
+            if 'photo' in request.FILES:
+                correspondente.photo = request.FILES['photo']  # Salva a imagem no campo 'photo' do objeto Corretor
 
             # Adicione o correspondente ao grupo
             # Verifique se 'correspondente' é uma instância do modelo User
@@ -1133,10 +1147,11 @@ def broker_dashboard(request):
 
     return render(request, 'broker_dashboard.html', context)
 
+from django.db.models.functions import TruncDay
 
 #administrador
 @user_passes_test(is_admin)
-@user_passes_test(is_admin)
+
 @login_required
 def admin_dashboard(request):
     context = {}  # Initialize the context dictionary
@@ -1154,9 +1169,9 @@ def admin_dashboard(request):
     total_proprietarios = Proprietario.objects.count()
     total_contatos = Contato.objects.count()
     contatos_hoje = Contato.objects.filter(
-        data_registro=datetime.now().date()).count()
+        data_registro=timezone.now().date()).count()
     contatos_7_dias = Contato.objects.filter(
-        data_registro__gte=datetime.now() - timedelta(days=7)).count()
+        data_registro__gte=timezone.now() - timedelta(days=7)).count()
 
     status_counts = Cliente.objects.values(
         'status').annotate(total=Count('status'))
@@ -1206,13 +1221,13 @@ def admin_dashboard(request):
 
     chart_data_json = json.dumps(chart_data)
 
-    today = datetime.now().day
+    today = timezone.now().day
     expenses_due_soon = [expense for expense in fixed_expenses if 0 < (
         expense.due_day - today) <= 3]
 
-    current_year = datetime.now().year
+    current_year = timezone.now().year
     last_year = current_year - 1
-    current_month = datetime.now().month
+    current_month = timezone.now().month
 
     total_current = Cliente.objects.filter(
         data_de_criacao__year=current_year,
@@ -1296,7 +1311,6 @@ def admin_dashboard(request):
         tipo_processo = TipoProcesso.objects.get(nome=processo.tipo)
 
     # Calcular o progresso para cada processo
-    # Calcular o progresso para cada processo
     for processo in processos:
         if processo:
             processo.progresso = int(calcular_progresso(
@@ -1310,7 +1324,16 @@ def admin_dashboard(request):
 
     # Define opcoes_selecionadas here to ensure it's always defined
     opcoes_selecionadas = []
+    # Gerar dados diários
+    daily_counts = Cliente.objects.filter(data_de_criacao__isnull=False).annotate(
+        day=TruncDay('data_de_criacao')
+    ).values('day').annotate(total=Count('id')).order_by('day')
 
+    # Converter os QuerySets em JSON
+    daily_data_json = json.dumps(list(daily_counts), cls=DjangoJSONEncoder)
+
+    # Passar daily_data_json para o contexto
+    context['daily_data_json'] = daily_data_json
 
     tipo_processo = None
     opcoes_disponiveis = []
@@ -1360,7 +1383,7 @@ def admin_dashboard(request):
     }
 
     # Obter clientes recentes deste mês
-    current_date = now()
+    current_date = timezone.now()
     current_month = current_date.month
     current_year = current_date.year
     start_of_month = current_date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)

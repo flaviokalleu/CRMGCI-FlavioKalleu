@@ -26,8 +26,8 @@ SECRET_KEY = 'django-insecure-0iji++t(awmk_dc%gvjhsduhpf&kqj^8-=cz=f8qud7_d97!1w
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 X_FRAME_OPTIONS = 'ALLOWALL'
-CSRF_TRUSTED_ORIGINS = ['https://3brokers.com.br/']
-LOGIN_REDIRECT_URL = 'https://3brokers.com.br/'
+CSRF_TRUSTED_ORIGINS = ['https://parnassaimobiliaria.com.br/']
+LOGIN_REDIRECT_URL = 'https://parnassaimobiliaria.com.br/'
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = ['*']

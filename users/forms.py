@@ -183,8 +183,7 @@ class CorrespondenteForm(forms.ModelForm):
 
     class Meta:
         model = Correspondente
-        fields = ['username', 'first_name', 'last_name',
-                  'email', 'telefone', 'password']
+        fields = ['username', 'first_name', 'last_name', 'email', 'telefone', 'password', 'photo']
 
 # TransactionForm
 
